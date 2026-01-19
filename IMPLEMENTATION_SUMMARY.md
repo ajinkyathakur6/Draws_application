@@ -47,10 +47,23 @@ You now have a **complete tournament management system** with the following capa
 - Prevents re-recording winners (status validation)
 
 #### 6. Smart Round Progression
-- Match advancement algorithm correctly places winners
-- Handles both odd and even match numbers
-- Creates next round matches on-demand
-- Marks matches PENDING when both slots filled
+- **Bye Logic** - Seeded players get priority for byes (highest seed first), then randomly selected unseeded
+  - Seeded bye players positioned at maximally spaced match numbers (1, 4, 8 pattern)
+  - Unseeded byes randomly distributed, not sequential
+  - All bye matches auto-marked as winners
+
+- **Winner Recording** - Coordinators must use "Today's Matches" page with confirmation popup
+  - Cannot select winners on bracket page
+  - Each selection requires explicit confirmation
+  - Prevents accidental winner selection
+
+- **Round Progression** - Manual "Finish Round" button on bracket page
+  - Coordinator clicks after all matches in round are complete
+  - Creates next round matches explicitly
+  - Future rounds only visible after previous round finished
+  
+- **Smart Round Creation** - Generates next round matches on explicit action
+- **Status Tracking** - Complete tournament state management
 
 #### 7. Public Bracket Viewing
 - Anyone can view tournament brackets
@@ -80,7 +93,12 @@ You now have a **complete tournament management system** with the following capa
 // Match
 {
   eventId, round, matchNo, slot1, slot2, winner,
-  status: PENDING|COMPLETED
+  status: PENDING|COMPLETED,
+  isBye: boolean,
+  roundStatus: ACTIVE|FINISHED,
+  winnerName: string,
+  slot1Name: string,
+  slot2Name: string
 }
 ```
 
@@ -116,41 +134,59 @@ You now have a **complete tournament management system** with the following capa
 3. **AdminEventParticipants** - Manage participants, set seeds, generate draws
 
 **Coordinator Pages**
-1. **CoordinatorDashboard** - Select events, view brackets, record winners
-2. **CoordinatorParticipants** - Add students to events
+1. **CoordinatorDashboard** - Select events, view bracket (read-only)
+2. **CoordinatorMatches** - Today's Matches page with winner selection buttons (with confirmation)
+3. **CoordinatorParticipants** - Add students to events
 
 **Public Pages**
-1. **EventBracketPage** - View tournament brackets
+1. **EventBracketPage** - View tournament brackets (read-only display)
 2. **PublicBracket** - Home page listing events
 
 ### ✨ Smart Features
 
-#### Bye Logic
+#### Bye Logic - Priority Based
 ```
-5 participants:
-- Bracket size = 8
-- Byes = 3
-- Unseeded players get BYE matches
-- Auto-advances without coordinator action
+With more byes than seeded players:
+- FIRST: All seeded players get byes (in seed order: 1, 2, 3...)
+- THEN: Remaining byes go to RANDOMLY SELECTED unseeded players
+- NOT sequential from registration
+
+Example: 11 players (3 seeded, 8 unseeded), 5 byes needed
+- S1, S2, S3 get byes (all seeded)
+- 2 more from random selection of [U1-U8]
+- Possible outcome: S1, S2, S3, U7, U3 (not U1, U2 in order)
+
+Positioning: Seeded byes placed at maximally spaced matches (1, 4, 8)
+- Prevents clustering of strong players
+- Ensures balanced bracket distribution
 ```
 
-#### Seeding Placement
+#### Seeding Placement - Maximally Spaced
 ```
-Seed positions for 8-bracket: [0, 7, 3, 4]
-- Seed 1 at position 0 (left side)
-- Seed 2 at position 7 (right side) - opposite end
-- Prevents top seeds meeting early
-- Strategic placement for balanced bracket
+8-match bracket, 3 seeded byes:
+- Formula: position = floor(i * (8-1) / (3-1))
+- S1 at match 1 (position 0)
+- S2 at match 4 (position 3)
+- S3 at match 8 (position 7)
+- Prevents seeded players meeting early
 ```
 
-#### Match Advancement
+#### Winner Recording - Controlled Flow
 ```
-When winner recorded:
-1. Calculate next round position
-2. Create next round match if needed
-3. Place winner in correct slot (slot1 or slot2)
-4. Mark as PENDING when both slots filled
-5. Ready for next match
+COORDINATOR WORKFLOW:
+1. Goes to "Today's Matches" page
+2. Sees all PENDING matches from current round
+3. Clicks player button to select winner
+4. Confirmation popup: "Confirm winner: [Name] - This cannot be undone"
+5. Match marked COMPLETED when winner confirmed
+
+FINISH ROUND:
+1. After all non-bye matches in round COMPLETED
+2. "Finish Round N" button appears on bracket page
+3. Coordinator clicks with confirmation
+4. Next round matches created
+5. Round N+1 becomes visible
+6. Repeat for next round
 ```
 
 ### 🔄 Complete Workflow

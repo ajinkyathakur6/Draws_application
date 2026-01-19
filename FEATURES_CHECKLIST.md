@@ -14,19 +14,21 @@
 
 ### Coordinator Functionality
 - [x] Add students as participants to events
-- [x] View event bracket/draws
-- [x] Record winners for matches
-- [x] Automatic round advancement
+- [x] View event bracket/draws (read-only display)
+- [x] Record winners for matches via "Today's Matches" page with confirmation popup
+- [x] Cannot select winners on bracket page
+- [x] Click "Finish Round" button to create next round matches
 - [x] Select multiple events
 - [x] Better UI for event management and bracket viewing
 
 ### Tournament Logic
 - [x] Power of 2 bracket sizing (2, 4, 8, 16, 32, 64)
-- [x] Bye assignment to unseeded players
-- [x] Seeded placement at strategic positions
-- [x] Auto-completion of bye matches
-- [x] Match advancement to next round
-- [x] Automatic next round match creation
+- [x] Bye assignment: Seeded players get priority, then randomly selected unseeded
+- [x] Maximally spaced seeded bye placement (prevents clustering)
+- [x] Auto-completion of bye matches (marked as winners)
+- [x] Manual winner selection through Today's Matches page only
+- [x] Explicit "Finish Round" to create next round (no auto-advancement)
+- [x] Round visibility: Only shows accessible rounds (Round 1 + finished rounds)
 - [x] Winner tracking through all rounds
 
 ### Frontend Pages Created/Updated

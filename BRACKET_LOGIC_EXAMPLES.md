@@ -1,6 +1,25 @@
 # Tournament Bracket Logic - Visual Examples
 
-## Example 1: 5 Participants → 8 Bracket Size
+## Bye Allocation Strategy
+
+### Priority Order
+1. **Highest Seed First** → Seed 1, 2, 3... get byes in seed order
+2. **Random Unseeded** → Remaining byes go to randomly selected unseeded players (NOT sequential)
+
+### Seeded Bye Positioning
+- Seeded bye players are placed at **maximally spaced match numbers**
+- Formula: `position = floor(i * (totalMatches - 1) / (seededByeCount - 1))`
+- Example with 8 matches and 3 seeded byes: matches **1, 4, 8** (not 1, 2, 3)
+
+### Winner Recording Flow
+1. Coordinators record winners via **"Today's Matches"** page only
+2. Confirmation popup prevents accidental selection
+3. **Finish Round** button on brackets page creates next round
+4. Future rounds only visible after previous round completion
+
+---
+
+## Example 1: 11 Participants (3 Seeded, 8 Unseeded)
 
 ### Participants
 ```

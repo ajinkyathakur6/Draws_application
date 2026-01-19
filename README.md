@@ -15,10 +15,11 @@ A complete **tournament management system** that handles student enrollment, eve
 
 ### 🔧 Smart Features
 - **Auto Bracket Sizing** - Rounds up to power of 2 (2, 4, 8, 16, 32, 64)
-- **Bye Logic** - Automatically assigns byes to unseeded players
-- **Seeding Strategy** - Top seeds placed at strategic positions
-- **Auto Advancement** - Winners automatically advance to next round
-- **Smart Round Creation** - Generates next round matches on-demand
+- **Intelligent Bye Logic** - Seeded players get byes first (highest seed priority), then randomly selected unseeded players
+- **Seeding Strategy** - Top seeds placed at maximally spaced match positions to prevent early meetings
+- **Match Winner Recording** - Through "Today's Matches" page with confirmation popup
+- **Finish Round Button** - On brackets page to explicitly create next round matches
+- **Round Visibility Control** - Future rounds only visible after previous round completion
 - **Status Tracking** - Complete tournament state management
 
 ## 📚 Documentation
@@ -70,13 +71,15 @@ npm run dev
    ↓
 5. ADMIN generates tournament draw
    ↓
-6. COORDINATOR records match winners
+6. COORDINATOR records match winners through Today's Matches page
    ↓
-7. Winners automatically advance to next round
+7. When all Round N matches complete, COORDINATOR clicks "Finish Round"
    ↓
-8. Repeat until champion determined
+8. Next round matches are created, Round N+1 becomes visible
    ↓
-9. PUBLIC views complete bracket
+9. Repeat until champion determined
+   ↓
+10. PUBLIC views complete bracket
 ```
 
 ## 🎯 Example: 5 Player Tournament
@@ -84,17 +87,24 @@ npm run dev
 ```
 Admin uploads 5 students → Creates "Badminton Mens" event
 Coordinator adds all 5 to event
-Admin assigns seeds: 1st, 2nd, 3rd (unseeded get byes)
+Admin assigns seeds: 1st, 2nd, 3rd (rest unseeded)
 Admin generates draws:
   - Bracket size: 8 (rounded up from 5)
   - Byes: 3
-  - Winners advance automatically
+  - Seeded byes distributed at matches 1, 4, 8 (maximally spaced)
+  - Unseeded byes randomly selected from remaining 2 unseeded players
+  - Bye matches auto-marked as won
 
-Round 1: 4 matches (1 bye match auto-completes)
-Round 2: 2 matches (created automatically)
-Round 3: 1 match (final)
+Round 1: 4 matches (bye matches auto-completed, 1 regular match pending)
+  - Match 1: Seed1 (bye)
+  - Match 2: Unseeded (bye)  
+  - Match 3: Unseeded (bye) or regular match
+  - Match 4: Regular match pending winner selection
 
-Coordinator selects winners → Bracket updates → Champion!
+Coordinator selects winners via Today's Matches page with confirmation
+→ When all Round 1 matches complete, clicks "Finish Round" button
+→ Round 2 matches created and visible
+→ Champion crowned after finals!
 ```
 
 ## 🎮 Testing
