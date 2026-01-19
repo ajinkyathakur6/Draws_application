@@ -34,7 +34,7 @@ export default function CoordinatorDashboard() {
 
       if (eventRes.data.status === "DRAWN" || eventRes.data.status === "LIVE") {
         const bracketRes = await api.get(`/draws/${eventId}/bracket`);
-        setBracket(bracketRes.data);
+        setBracket(bracketRes.data.bracket || {});
       } else {
         setBracket({});
       }

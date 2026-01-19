@@ -13,7 +13,7 @@ export default function PublicBracket() {
   const loadBracket = async (id) => {
     setEventId(id);
     const res = await api.get("/draws/" + id + "/bracket");
-    setBracket(res.data);
+    setBracket(res.data.bracket || {});
   };
 
   return (
