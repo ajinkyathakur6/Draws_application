@@ -19,11 +19,16 @@ yarn-error.log*
 pnpm-debug.log*
 
 ############################
-# Environment files
+# Environment files - CRITICAL: Never commit!
 ############################
 .env
-.env.*
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 !.env.example
+.env.*
 
 ############################
 # Node modules (Frontend & Backend)
@@ -48,6 +53,17 @@ tournament-backend/build/
 ############################
 .cache/
 .npm/
+
+############################
+# Sensitive files
+############################
+*.pem
+*.key
+*.p12
+*.pfx
+uploads/
+*.csv
+
 .yarn/
 .pnpm-store/
 
