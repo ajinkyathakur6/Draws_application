@@ -111,13 +111,13 @@ export default function CoordinatorDashboard() {
     <>
       <Navbar role={role} />
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-6">Coordinator Dashboard</h1>
+        <div className="w-full md:max-w-7xl mx-auto p-3 md:p-6">
+          <h1 className="text-2xl md:text-3xl font-bold mb-6">Coordinator Dashboard</h1>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {/* Events List */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg border overflow-hidden">
+            <div className="lg:col-span-1 md:col-span-2">
+              <div className="bg-white rounded-lg border overflow-hidden h-full">
                 <div className="bg-gray-100 p-4 border-b">
                   <h2 className="font-bold">Events</h2>
                 </div>
@@ -248,15 +248,15 @@ export default function CoordinatorDashboard() {
                         })()}
                       </div>
 
-                      <div className="flex gap-6 overflow-x-auto pb-4">
+                      <div className="flex flex-col gap-2 overflow-x-auto pb-4">
                         {getAccessibleRounds(bracket).map((round) => {
                           const rounds = getAccessibleRounds(bracket);
                           const lastRound = rounds[rounds.length - 1];
                           const isFinalRound = round === lastRound && bracket[round]?.length === 1;
 
                           return (
-                            <div key={round} className="min-w-[280px]">
-                              <h4 className={`font-bold text-center mb-3 sticky top-0 py-2 ${
+                            <div key={round} className="md:min-w-[280px] w-full md:w-auto">
+                              <h4 className={`font-bold text-center text-sm md:text-base mb-3 sticky top-0 py-2 ${
                                 isFinalRound ? "bg-green-50 text-green-700" : "bg-white"
                               }`}>
                                 {isFinalRound ? "Grand Final" : `Round ${round}`}

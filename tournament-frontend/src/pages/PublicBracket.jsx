@@ -17,11 +17,11 @@ export default function PublicBracket() {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold">Live Tournament Bracket</h1>
+    <div className="p-3 md:p-6 min-h-screen bg-gray-50">
+      <h1 className="text-2xl md:text-3xl font-bold mb-4">Live Tournament Bracket</h1>
 
       <select
-        className="border p-2 mt-2"
+        className="border p-2 mt-2 w-full md:w-64 text-base"
         onChange={(e) => loadBracket(e.target.value)}
       >
         <option>Select Event</option>
@@ -42,16 +42,16 @@ export default function PublicBracket() {
         if (isFinals) {
           const finalMatch = finalMatches[0];
           return (
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-500 rounded-lg p-6 text-center my-6">
-              <h2 className="text-2xl font-bold text-green-700 mb-3">🏆 Tournament Champion 🏆</h2>
-              <div className="text-3xl font-bold text-green-600">{finalMatch.winnerName}</div>
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-500 rounded-lg p-4 md:p-6 text-center my-4 md:my-6">
+              <h2 className="text-xl md:text-2xl font-bold text-green-700 mb-2 md:mb-3">🏆 Tournament Champion 🏆</h2>
+              <div className="text-2xl md:text-3xl font-bold text-green-600 break-words">{finalMatch.winnerName}</div>
             </div>
           );
         }
         return null;
       })()}
 
-      <div className="flex overflow-x-auto mt-6 space-x-6">
+      <div className="flex flex-col md:flex-row overflow-x-auto mt-6 gap-3 md:gap-6">
         {Object.keys(bracket)
           .sort((a, b) => parseInt(a) - parseInt(b))
           .map((round) => {
@@ -60,13 +60,13 @@ export default function PublicBracket() {
             const isFinalRound = parseInt(round) === parseInt(lastRound) && bracket[round]?.length === 1;
 
             return (
-              <div key={round} className="min-w-[250px]">
-                <h2 className={`font-bold text-center ${isFinalRound ? "text-green-700 bg-green-50 p-2 rounded" : ""}`}>
+              <div key={round} className="md:min-w-[280px] w-full md:w-auto">
+                <h2 className={`font-bold text-center text-sm md:text-base ${isFinalRound ? "text-green-700 bg-green-50 p-2 rounded" : ""}`}>
                   {isFinalRound ? "Grand Final" : `Round ${round}`}
                 </h2>
 
                 {bracket[round].map((m) => (
-                  <div key={m._id} className="border p-2 my-2 text-sm">
+                  <div key={m._id} className="border p-2 md:p-3 my-2 text-xs md:text-sm">
                     <div
                       className={
                         m.winner === m.slot1 ? "font-bold text-green-600" : ""

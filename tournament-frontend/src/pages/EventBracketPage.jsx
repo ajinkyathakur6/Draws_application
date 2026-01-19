@@ -159,13 +159,13 @@ export default function EventBracketPage() {
   return (
     <>
       <Navbar role={role} />
-      <div className="p-6">
+      <div className="p-3 md:p-6">
         {event && (
           <>
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">
               {event.sport} – {event.category} – {event.format}
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm md:text-base text-gray-600 mb-6">
               Status: <span className="font-semibold">{event.status}</span>
             </p>
           </>
@@ -204,11 +204,11 @@ export default function EventBracketPage() {
                 const roundComplete = isRoundComplete(round, bracket);
 
                 return (
-                  <div key={round} className="min-w-[320px]">
-                    <div className={`font-bold text-center mb-3 sticky top-0 py-3 rounded ${
+                  <div key={round} className="md:min-w-[320px] w-full md:w-auto">
+                    <div className={`font-bold text-center text-sm md:text-base mb-3 sticky top-0 py-3 rounded ${
                       isFinalRound ? "bg-green-50 text-green-700" : "bg-gray-100"
                     }`}>
-                      <div className="text-lg">
+                      <div className="text-base md:text-lg">
                         {isFinalRound ? "Grand Final" : `Round ${round}`}
                       </div>
                       {isActiveRound && !roundComplete && (
@@ -226,7 +226,7 @@ export default function EventBracketPage() {
                     {bracket[round].map((m) => (
                       <div
                         key={m._id}
-                        className={`border rounded-lg p-4 text-sm bg-white shadow transition ${
+                        className={`border rounded-lg p-3 text-xs md:text-sm bg-white shadow transition ${
                           m.isBye ? "bg-gray-50" : "hover:shadow-lg"
                         }`}
                       >
