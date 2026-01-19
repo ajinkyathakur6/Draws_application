@@ -4,7 +4,7 @@ const Participation = require("../models/Participation");
 const Team = require("../models/Team");
 const Event = require("../models/Event");
 const Match = require("../models/Match");
-const { nextPowerOf2, seedMaps } = require("../utils/bracket");
+const { nextPowerOf2, createSeededBracket } = require("../utils/bracket");
 
 const auth = require("../middleware/auth");
 
@@ -30,110 +30,116 @@ router.post("/:eventId/generate", auth("ADMIN"), async (req, res) => {
     const n = participants.length;
     if (n < 2) return res.status(400).json({ error: "Not enough players/teams" });
 
-    const bracketSize = nextPowerOf2(n);
-    const byes = bracketSize - n;
+    // Clear ALL old matches for this event (all rounds)
+    const deletedCount = await Match.deleteMany({ eventId });
+    console.log(`Deleted ${deletedCount.deletedCount} old matches for event ${eventId}`);
 
-    // Separate seeded and unseeded
-    const seeded = participants.filter(p => p.seed > 0).sort((a, b) => a.seed - b.seed); // Sort by seed ascending (1 first = strongest)
-    const unseeded = participants.filter(p => p.seed === 0).sort(() => Math.random() - 0.5); // Shuffle unseeded
+    // Use proper seeding algorithm
+    const { bracket, byes, byePlayers, playingPlayers } = createSeededBracket(participants);
 
-    // Allocate BYEs with correct preference order:
-    // Priority 1: Seeded players (lower seed number first = stronger = gets BYE preference)
-    // Priority 2: Unseeded players (random selection)
-    const byeParticipants = [];
-    const playParticipants = [];
+    console.log(`Creating draws for ${n} participants:`);
+    console.log(`- Bracket size: ${nextPowerOf2(n)}`);
+    console.log(`- Byes: ${byes}`);
+    console.log(`- Matches to play: ${playingPlayers.length / 2}`);
 
-    let byesNeeded = byes;
+    // Create ONLY Round 1 matches from the seeded bracket
+    let matchNo = 1;
+    let createdMatches = 0;
+    let createdByes = 0;
+    
+    for (let i = 0; i < bracket.length; i += 2) {
+      const p1 = bracket[i];
+      const p2 = bracket[i + 1];
 
-    // First, allocate BYEs to seeded players (in seed order: 1, 2, 3... = strongest first)
-    for (let i = 0; i < seeded.length && byesNeeded > 0; i++) {
-      byeParticipants.push(seeded[i]);
-      byesNeeded--;
-    }
-
-    // Add remaining seeded players to play list
-    for (let i = byeParticipants.filter(p => p.seed > 0).length; i < seeded.length; i++) {
-      playParticipants.push(seeded[i]);
-    }
-
-    // If still need BYEs, allocate to unseeded players (randomly shuffled)
-    for (let i = 0; i < unseeded.length && byesNeeded > 0; i++) {
-      byeParticipants.push(unseeded[i]);
-      byesNeeded--;
-    }
-
-    // Add remaining unseeded players to play list
-    const byeIds = byeParticipants.map(p => p.id);
-    for (let i = 0; i < unseeded.length; i++) {
-      if (!byeIds.includes(unseeded[i].id)) {
-        playParticipants.push(unseeded[i]);
+      // If both slots are filled, create a regular match
+      if (p1 && p2) {
+        await Match.create({
+          eventId,
+          round: 1,  // EXPLICITLY Round 1 only
+          matchNo: matchNo++,
+          slot1: p1.id,
+          slot2: p2.id,
+          status: "PENDING",
+          isBye: false,
+          roundStatus: "ACTIVE"
+        });
+        createdMatches++;
+      }
+      // If only p1 exists, they get a bye
+      else if (p1 && !p2) {
+        await Match.create({
+          eventId,
+          round: 1,  // EXPLICITLY Round 1 only
+          matchNo: matchNo++,
+          slot1: p1.id,
+          slot2: null,  // No opponent - blank
+          winner: p1.id,  // BYE player automatically wins
+          status: "COMPLETED",   // Match is auto-completed
+          isBye: true,           // Mark as bye match
+          roundStatus: "ACTIVE"
+        });
+        createdByes++;
+      }
+      // If only p2 exists (shouldn't happen with proper seeding, but handle it)
+      else if (!p1 && p2) {
+        await Match.create({
+          eventId,
+          round: 1,  // EXPLICITLY Round 1 only
+          matchNo: matchNo++,
+          slot1: p2.id,
+          slot2: null,
+          winner: p2.id,
+          status: "COMPLETED",
+          isBye: true,
+          roundStatus: "ACTIVE"
+        });
+        createdByes++;
       }
     }
 
-    // Clear old matches
-    await Match.deleteMany({ eventId });
+    console.log(`Created ${createdMatches} regular matches and ${createdByes} bye matches for Round 1`);
 
-    // Create Round 1 matches (only for players who don't have BYE)
-    let matchNo = 1;
-    for (let i = 0; i < playParticipants.length; i += 2) {
-      const p1 = playParticipants[i];
-      const p2 = playParticipants[i + 1];
-
-      await Match.create({
-        eventId,
-        round: 1,
-        matchNo: matchNo++,
-        slot1: p1.id,
-        slot2: p2?.id || "BYE",
-        status: "PENDING"
-      });
-    }
-
-    // Create auto-completed BYE matches for BYE participants
-    // These matches have only the bye player vs blank opponent and are auto-completed
-    for (let i = 0; i < byeParticipants.length; i++) {
-      const byePlayer = byeParticipants[i];
-      
-      await Match.create({
-        eventId,
-        round: 1,
-        matchNo: matchNo++,
-        slot1: byePlayer.id,
-        slot2: "BYE",
-        winner: byePlayer.id,  // BYE player automatically wins
-        status: "COMPLETED"     // Match is auto-completed
-      });
+    // Verify only Round 1 was created
+    const allMatches = await Match.find({ eventId });
+    const round2Matches = allMatches.filter(m => m.round === 2);
+    if (round2Matches.length > 0) {
+      console.error(`ERROR: ${round2Matches.length} Round 2 matches were created unexpectedly!`);
     }
 
     event.status = "DRAWN";
     await event.save();
 
+    const numMatches = playingPlayers.length / 2;
+    const numByes = byePlayers.length;
+
     res.json({ 
-      message: "Draws generated", 
-      bracketSize, 
-      byes,
-      byeCount: byeParticipants.length,
-      playingCount: playParticipants.length
+      message: "Draws generated with proper seeding", 
+      totalParticipants: n,
+      bracketSize: nextPowerOf2(n),
+      matches: numMatches,
+      byes: numByes,
+      byePlayers: byePlayers.length,
+      playingPlayers: playingPlayers.length
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Finish a round - advance BYE players and create next round
+// Finish a round - mark round as finished and create next round
 router.post("/:eventId/finish-round/:round", auth("COORDINATOR"), async (req, res) => {
   try {
     const { eventId, round } = req.params;
     const roundNum = parseInt(round);
 
     // Get all matches from this round
-    const roundMatches = await Match.find({ eventId, round: roundNum });
+    const roundMatches = await Match.find({ eventId, round: roundNum, roundStatus: "ACTIVE" });
     
     console.log(`Finishing Round ${roundNum} for event ${eventId}`);
     console.log("Total Round Matches:", roundMatches.length);
     
     // Check if all non-bye matches are completed
-    const nonByeMatches = roundMatches.filter(m => m.slot2 !== "BYE" && m.slot2 !== "BYE_PARTICIPANTS");
+    const nonByeMatches = roundMatches.filter(m => !m.isBye);
     const allCompleted = nonByeMatches.every(m => m.status === "COMPLETED");
 
     console.log("Non-BYE Matches:", nonByeMatches.length);
@@ -143,46 +149,79 @@ router.post("/:eventId/finish-round/:round", auth("COORDINATOR"), async (req, re
       return res.status(400).json({ error: "Not all matches in this round are completed" });
     }
 
-    // Get bye marker to find BYE participants
-    const byeMarker = await Match.findOne({ eventId, isByeMarker: true });
-    const byePlayerIds = byeMarker ? byeMarker.slot1.split(",").filter(id => id.trim()) : [];
+    // Check if next round already exists
+    const existingNextRound = await Match.findOne({ eventId, round: roundNum + 1 });
+    if (existingNextRound) {
+      return res.status(400).json({ error: `Round ${roundNum + 1} already exists` });
+    }
 
-    console.log("Bye Marker Found:", !!byeMarker);
-    console.log("BYE Player IDs:", byePlayerIds);
+    // Mark all matches in this round as FINISHED
+    await Match.updateMany(
+      { eventId, round: roundNum },
+      { $set: { roundStatus: "FINISHED" } }
+    );
 
-    // Get winners from this round and bye players
-    const winners = nonByeMatches
-      .filter(m => m.winner)
-      .map(m => m.winner);
+    // Get all winners from this round (including bye winners) - use Set to ensure uniqueness
+    const winners = [...new Set(
+      roundMatches
+        .filter(m => m.winner)
+        .map(m => m.winner)
+    )];
 
-    console.log("Winners from Round:", winners);
+    console.log("Winners advancing to next round:", winners);
 
-    const nextRoundParticipants = [...new Set([...winners, ...byePlayerIds])]; // Combine and deduplicate
-
-    console.log("Next Round Participants Count:", nextRoundParticipants.length);
-    console.log("Next Round Participants:", nextRoundParticipants);
-
-    // Create matches for next round
-    let nextMatchNo = 1;
-    for (let i = 0; i < nextRoundParticipants.length; i += 2) {
-      const p1 = nextRoundParticipants[i];
-      const p2 = nextRoundParticipants[i + 1];
-
-      await Match.create({
-        eventId,
-        round: roundNum + 1,
-        matchNo: nextMatchNo++,
-        slot1: p1,
-        slot2: p2 || "BYE",
-        status: "PENDING"
+    // If only 1 winner, tournament is complete
+    if (winners.length === 1) {
+      const event = await Event.findById(eventId);
+      event.status = "COMPLETED";
+      await event.save();
+      
+      return res.json({ 
+        message: "Tournament completed!",
+        winner: winners[0],
+        tournamentComplete: true
       });
     }
 
+    // Create matches for next round
+    let nextMatchNo = 1;
+    for (let i = 0; i < winners.length; i += 2) {
+      const p1 = winners[i];
+      const p2 = winners[i + 1];
+
+      // Check if p2 exists - if not, p1 gets a bye
+      if (p2) {
+        // Regular match
+        await Match.create({
+          eventId,
+          round: roundNum + 1,
+          matchNo: nextMatchNo++,
+          slot1: p1,
+          slot2: p2,
+          status: "PENDING",
+          isBye: false,
+          roundStatus: "ACTIVE"
+        });
+      } else {
+        // Bye match - auto-complete
+        await Match.create({
+          eventId,
+          round: roundNum + 1,
+          matchNo: nextMatchNo++,
+          slot1: p1,
+          slot2: null,
+          winner: p1,
+          status: "COMPLETED",
+          isBye: true,
+          roundStatus: "ACTIVE"
+        });
+      }
+    }
+
     res.json({ 
-      message: `Round ${roundNum} finished. Round ${roundNum + 1} created with ${nextRoundParticipants.length} participants`,
-      participantCount: nextRoundParticipants.length,
-      byeCount: byePlayerIds.length,
-      winnerCount: winners.length
+      message: `Round ${roundNum} finished. Round ${roundNum + 1} created with ${winners.length} participants`,
+      participantCount: winners.length,
+      nextRound: roundNum + 1
     });
   } catch (error) {
     console.error("Error finishing round:", error);
@@ -214,43 +253,6 @@ router.post("/match/:matchId/winner", auth("COORDINATOR"), async (req, res) => {
   }
 });
 
-async function advanceWinner(match) {
-  const nextRound = match.round + 1;
-  const nextMatchNo = Math.ceil(match.matchNo / 2);
-
-  const isSlot1 = match.matchNo % 2 === 1;
-
-  let nextMatch = await Match.findOne({
-    eventId: match.eventId,
-    round: nextRound,
-    matchNo: nextMatchNo
-  });
-
-  if (!nextMatch) {
-    nextMatch = await Match.create({
-      eventId: match.eventId,
-      round: nextRound,
-      matchNo: nextMatchNo,
-      slot1: null,
-      slot2: null,
-      status: "PENDING"
-    });
-  }
-
-  if (isSlot1) {
-    nextMatch.slot1 = match.winner;
-  } else {
-    nextMatch.slot2 = match.winner;
-  }
-
-  // If both slots filled, keep it ready
-  if (nextMatch.slot1 && nextMatch.slot2) {
-    nextMatch.status = "PENDING";
-  }
-
-  await nextMatch.save();
-}
-
 router.get("/:eventId/bracket", async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -258,6 +260,7 @@ router.get("/:eventId/bracket", async (req, res) => {
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ error: "Event not found" });
 
+    // Get all matches - both active and finished rounds
     const matches = await Match.find({ eventId }).sort({ round: 1, matchNo: 1 });
 
     // Resolve slot IDs to names
@@ -292,13 +295,38 @@ router.get("/:eventId/bracket", async (req, res) => {
     }));
 
     const bracket = {};
+    const roundStatus = {};
 
     resolvedMatches.forEach(m => {
-      if (!bracket[m.round]) bracket[m.round] = [];
+      if (!bracket[m.round]) {
+        bracket[m.round] = [];
+        roundStatus[m.round] = m.roundStatus;
+      }
       bracket[m.round].push(m);
     });
 
-    res.json(bracket);
+    // Filter out future rounds that shouldn't be accessible
+    // Only show Round 1, or rounds where previous round is FINISHED
+    const filteredBracket = {};
+    const filteredRoundStatus = {};
+    const rounds = Object.keys(bracket).map(r => parseInt(r)).sort((a, b) => a - b);
+    
+    for (const round of rounds) {
+      if (round === 1) {
+        // Always include Round 1
+        filteredBracket[round] = bracket[round];
+        filteredRoundStatus[round] = roundStatus[round];
+      } else {
+        // Only include if previous round is FINISHED
+        const prevRound = round - 1;
+        if (roundStatus[prevRound] === "FINISHED") {
+          filteredBracket[round] = bracket[round];
+          filteredRoundStatus[round] = roundStatus[round];
+        }
+      }
+    }
+
+    res.json({ bracket: filteredBracket, roundStatus: filteredRoundStatus });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

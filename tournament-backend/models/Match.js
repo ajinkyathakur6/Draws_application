@@ -16,6 +16,15 @@ const matchSchema = new mongoose.Schema({
     enum: ["PENDING", "COMPLETED"],
     default: "PENDING"
   },
+  isBye: {
+    type: Boolean,
+    default: false
+  },
+  roundStatus: {
+    type: String,
+    enum: ["ACTIVE", "FINISHED"],
+    default: "ACTIVE"
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

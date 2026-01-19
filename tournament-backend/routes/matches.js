@@ -36,16 +36,17 @@ router.get("/today", auth("COORDINATOR"), async (req, res) => {
       return res.json([]);
     }
 
-    // Get all matches from LIVE events
+    // Get all matches from LIVE events - only ACTIVE rounds
     const matches = await Match.find({
       eventId: { $in: liveEventIds },
-      status: "PENDING"  // Only show pending matches
+      status: "PENDING",  // Only show pending matches
+      roundStatus: "ACTIVE"  // Only show matches from active rounds
     }).populate("eventId").sort({ round: 1, matchNo: 1 });
 
-    // Filter out bye tracking matches (round 0) and BYE-only matches
+    // Filter out bye matches
     const filteredMatches = matches.filter(m => 
       m.round > 0 && 
-      !(m.slot1 === "BYE" && m.slot2 === "BYE") &&
+      !m.isBye &&
       !m.isByeMarker
     );
 
@@ -107,54 +108,12 @@ router.put("/:matchId/winner", auth("COORDINATOR"), async (req, res) => {
     match.status = "COMPLETED";
     await match.save();
 
-    // move winner to next round
-    await advanceWinner(match);
+    // Don't auto-advance - winners advance only when "Finish Round" is clicked
 
-    res.json({ message: "Winner updated" });
+    res.json({ message: "Winner updated. Complete all Round matches and click 'Finish Round' to create next round." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
-async function advanceWinner(match) {
-  try {
-    const nextRound = match.round + 1;
-    const nextMatchNo = Math.ceil(match.matchNo / 2);
-
-    const isSlot1 = match.matchNo % 2 === 1;
-
-    let nextMatch = await Match.findOne({
-      eventId: match.eventId,
-      round: nextRound,
-      matchNo: nextMatchNo
-    });
-
-    if (!nextMatch) {
-      nextMatch = await Match.create({
-        eventId: match.eventId,
-        round: nextRound,
-        matchNo: nextMatchNo,
-        slot1: null,
-        slot2: null,
-        status: "PENDING"
-      });
-    }
-
-    if (isSlot1) {
-      nextMatch.slot1 = match.winner;
-    } else {
-      nextMatch.slot2 = match.winner;
-    }
-
-    // If both slots filled, keep it ready
-    if (nextMatch.slot1 && nextMatch.slot2) {
-      nextMatch.status = "PENDING";
-    }
-
-    await nextMatch.save();
-  } catch (error) {
-    console.error("Error advancing winner:", error);
-  }
-}
 
 module.exports = router;
