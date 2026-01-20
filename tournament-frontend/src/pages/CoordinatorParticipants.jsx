@@ -138,9 +138,9 @@ export default function CoordinatorParticipants() {
   return (
     <>
       <Navbar role={role} />
-      <div className="p-6 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Add Participants</h1>
-        <h2 className="text-xl text-gray-600 mb-6">
+      <div className="p-4 md:p-6 max-w-4xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Add Participants</h1>
+        <h2 className="text-lg md:text-xl text-gray-600 mb-6">
           {event.sport} – {event.category} – {event.format}
         </h2>
 
@@ -213,19 +213,19 @@ export default function CoordinatorParticipants() {
             )}
 
             {/* Seed */}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="number"
                 placeholder="Seed (optional)"
                 value={seed}
                 onChange={(e) => setSeed(e.target.value)}
                 min="0"
-                className="w-24 border p-2 rounded"
+                className="w-full sm:w-24 border p-2 rounded"
               />
               <button
                 onClick={addParticipant}
                 disabled={loading}
-                className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 font-semibold"
+                className="w-full sm:flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 font-semibold"
               >
                 {loading ? "Adding..." : isSingles ? "Add Player" : "Add Team"}
               </button>
@@ -234,8 +234,9 @@ export default function CoordinatorParticipants() {
         </div>
 
         {/* Participants List */}
-        <div className="bg-white border rounded-lg overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white border rounded-lg overflow-x-auto">
+          {/* Desktop Table */}
+          <table className="w-full hidden md:table">
             <thead className="bg-gray-100">
               <tr>
                 <th className="p-3 text-left">
@@ -278,11 +279,50 @@ export default function CoordinatorParticipants() {
               )}
             </tbody>
           </table>
+
+          {/* Mobile Card Layout */}
+          <div className="md:hidden">
+            {participants.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                No participants added yet
+              </div>
+            ) : (
+              <div className="divide-y">
+                {participants.map((p, index) => (
+                  <div key={p._id} className="p-4 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-bold text-sm">
+                          {isSingles ? p.studentName : `Team ${index + 1}`}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {Array.isArray(p.members)
+                            ? p.members.map(m => m.name || m).join(" + ")
+                            : p.studentName}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-semibold text-gray-700">
+                          Seed: {p.seed || "—"}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeParticipant(p._id)}
+                      className="w-full bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 font-semibold"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Info Section */}
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded">
-          <p className="text-sm text-gray-700">
+          <p className="text-xs sm:text-sm text-gray-700">
             <strong>Note:</strong> For {event.format} format
             {isSingles
               ? " - add individual players."
