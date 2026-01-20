@@ -72,31 +72,31 @@ export default function AdminEventParticipants() {
     }
   };
 
-  if (!event) return <div className="p-6">Loading...</div>;
+  if (!event) return <div className="p-3 md:p-6">Loading...</div>;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-3 md:p-6 w-full">
       {/* Header */}
       <div className="mb-6">
         <button
           onClick={() => navigate("/admin/events")}
-          className="text-blue-600 hover:text-blue-800 mb-4"
+          className="text-blue-600 hover:text-blue-800 mb-4 text-sm md:text-base"
         >
           ← Back to Events
         </button>
-        <h1 className="text-3xl font-bold">Manage Participants</h1>
-        <h2 className="text-xl text-gray-600 mt-2">
+        <h1 className="text-2xl md:text-3xl font-bold">Manage Participants</h1>
+        <h2 className="text-lg md:text-xl text-gray-600 mt-2">
           {event.sport} – {event.category} – {event.format}
         </h2>
       </div>
 
       {/* Event Status and Actions */}
-      <div className="bg-white border rounded-lg p-4 mb-6">
-        <div className="flex justify-between items-center">
+      <div className="bg-white border rounded-lg p-3 md:p-4 mb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           <div>
-            <span className="text-gray-600">Status: </span>
+            <span className="text-xs md:text-sm text-gray-600">Status: </span>
             <span
-              className={`font-semibold ${
+              className={`font-semibold text-xs md:text-sm ${
                 event.status === "REGISTRATION"
                   ? "text-yellow-600"
                   : event.status === "DRAWN"
@@ -109,15 +109,15 @@ export default function AdminEventParticipants() {
               {event.status}
             </span>
           </div>
-          <div>
-            <span className="text-gray-600 mr-4">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-start md:items-center">
+            <span className="text-xs md:text-sm text-gray-600">
               Total Participants: <strong>{participants.length}</strong>
             </span>
             {event.status === "REGISTRATION" && (
               <button
                 onClick={generateDraws}
                 disabled={loading || participants.length < 2}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                className="bg-green-600 text-white px-3 md:px-4 py-2 rounded text-xs md:text-sm hover:bg-green-700 disabled:opacity-50 whitespace-nowrap"
               >
                 {loading ? "Generating..." : "Generate Draws"}
               </button>
@@ -127,50 +127,50 @@ export default function AdminEventParticipants() {
       </div>
 
       {/* Participants Table */}
-      <div className="bg-white border rounded-lg overflow-hidden">
+      <div className="bg-white border rounded-lg overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-100">
             <tr>
-              <th className="p-3 text-left">Roll No</th>
-              <th className="p-3 text-left">Name</th>
-              <th className="p-3 text-left">Seed</th>
-              <th className="p-3 text-center">Actions</th>
+              <th className="p-2 md:p-3 text-xs md:text-sm text-left">Roll No</th>
+              <th className="p-2 md:p-3 text-xs md:text-sm text-left">Name</th>
+              <th className="p-2 md:p-3 text-xs md:text-sm text-left">Seed</th>
+              <th className="p-2 md:p-3 text-xs md:text-sm text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {participants.length === 0 ? (
               <tr>
-                <td colSpan="4" className="p-4 text-center text-gray-500">
+                <td colSpan="4" className="p-3 md:p-4 text-center text-xs md:text-sm text-gray-500">
                   No participants yet
                 </td>
               </tr>
             ) : (
               participants.map((p) => (
                 <tr key={p._id} className="border-t hover:bg-gray-50">
-                  <td className="p-3 font-semibold">{p.rollNo}</td>
-                  <td className="p-3">{p.studentName}</td>
-                  <td className="p-3">
+                  <td className="p-2 md:p-3 font-semibold text-xs md:text-sm">{p.rollNo}</td>
+                  <td className="p-2 md:p-3 text-xs md:text-sm">{p.studentName}</td>
+                  <td className="p-2 md:p-3 text-xs md:text-sm">
                     {editingSeed === p._id ? (
-                      <div className="flex gap-2">
+                      <div className="flex flex-col md:flex-row gap-1 md:gap-2">
                         <input
                           type="number"
                           min="1"
                           value={seedValue}
                           onChange={(e) => setSeedValue(e.target.value)}
-                          className="border px-2 py-1 w-16 rounded"
+                          className="border px-2 py-1 rounded text-xs w-full md:w-16"
                           autoFocus
                         />
                         <button
                           onClick={() =>
                             updateSeed(p._id, seedValue)
                           }
-                          className="bg-blue-600 text-white px-2 py-1 rounded text-sm"
+                          className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 whitespace-nowrap"
                         >
                           Save
                         </button>
                         <button
                           onClick={() => setEditingSeed(null)}
-                          className="bg-gray-400 text-white px-2 py-1 rounded text-sm"
+                          className="bg-gray-400 text-white px-2 py-1 rounded text-xs hover:bg-gray-500 whitespace-nowrap"
                         >
                           Cancel
                         </button>
@@ -181,13 +181,13 @@ export default function AdminEventParticipants() {
                           setEditingSeed(p._id);
                           setSeedValue(p.seed || "");
                         }}
-                        className="cursor-pointer p-2 hover:bg-gray-100 rounded"
+                        className="cursor-pointer p-2 hover:bg-gray-100 rounded text-sm"
                       >
                         {p.seed || "—"}
                       </div>
                     )}
                   </td>
-                  <td className="p-3 text-center">
+                  <td className="p-2 md:p-3 text-center">
                     <span className="text-xs text-gray-500">
                       (Click seed to edit)
                     </span>

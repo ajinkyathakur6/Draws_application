@@ -319,10 +319,10 @@ export default function AdminDashboard() {
   return (
     <>
 
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="p-3 md:p-6">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6">Admin Dashboard</h1>
 
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6">
           <StatCard title="Total Events" value={totalEvents} />
           <StatCard title="Live Events" value={liveEvents} />
           <StatCard title="Students" value={studentsCount} />
@@ -335,9 +335,9 @@ export default function AdminDashboard() {
 
 function StatCard({ title, value }) {
   return (
-    <div className="border rounded p-6 text-center shadow-sm">
-      <div className="text-gray-500">{title}</div>
-      <div className="text-3xl font-bold mt-2">{value}</div>
+    <div className="border rounded p-3 md:p-6 text-center shadow-sm bg-white">
+      <div className="text-xs md:text-sm text-gray-500">{title}</div>
+      <div className="text-xl md:text-3xl font-bold mt-2">{value}</div>
     </div>
   );
 }

@@ -17,11 +17,36 @@ export default function Login() {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="p-6 border rounded w-80">
-        <input className="border p-2 w-full" placeholder="Email" onChange={e=>setEmail(e.target.value)} />
-        <input className="border p-2 w-full mt-2" type="password" placeholder="Password" onChange={e=>setPassword(e.target.value)} />
-        <button className="bg-blue-500 text-white w-full mt-4 p-2" onClick={login}>Login</button>
+    <div className="h-screen flex items-center justify-center bg-gray-50 p-3">
+      <div className="p-6 md:p-8 border rounded w-full max-w-sm bg-white shadow-lg">
+        <h1 className="text-2xl md:text-3xl font-bold text-center mb-6">🏆 Draws App</h1>
+        
+        <div className="space-y-4">
+          <input 
+            className="border p-2 md:p-3 w-full rounded text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500" 
+            placeholder="Email" 
+            onChange={e=>setEmail(e.target.value)} 
+          />
+          <input 
+            className="border p-2 md:p-3 w-full rounded text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500" 
+            type="password" 
+            placeholder="Password" 
+            onChange={e=>setPassword(e.target.value)} 
+          />
+          <button 
+            className="bg-blue-500 text-white w-full mt-4 p-2 md:p-3 rounded text-sm md:text-base font-semibold hover:bg-blue-600 transition"
+            onClick={login}
+          >
+            Login
+          </button>
+        </div>
+
+        <p className="text-xs md:text-sm text-gray-600 text-center mt-6">
+          Demo Credentials:<br/>
+          Admin: anuraggoutam133@gmail.com<br/>
+          Coordinator: anuraggoutam133+coord@gmail.com<br/>
+          Password: password123
+        </p>
       </div>
     </div>
   );
