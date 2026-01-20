@@ -40,13 +40,6 @@ export default function Login() {
             Login
           </button>
         </div>
-
-        <p className="text-xs md:text-sm text-gray-600 text-center mt-6">
-          Demo Credentials:<br/>
-          Admin: anuraggoutam133@gmail.com<br/>
-          Coordinator: anuraggoutam133+coord@gmail.com<br/>
-          Password: password123
-        </p>
       </div>
     </div>
   );
